@@ -1,138 +1,148 @@
-# 系统监控工具 (System Monitoring Tool)
+# System_Monitoring 系统监控平台
 
-一个跨平台的系统监控工具，支持Windows和Ubuntu平台，提供实时硬件监控和网络状态检测。
+## 项目简介
+System_Monitoring 是一款跨平台（Windows、Ubuntu）高性能主机系统资源监控与可视化平台。支持 CPU、内存、GPU、磁盘、网络等多维度实时监控，集成 Web 大屏、API、告警推送、优化建议和自定义硬件配置，适用于服务器、工作站和个人电脑。
 
-## 🚀 功能特性
+---
 
-### 硬件监控
-- **CPU监控**: 使用率、温度、频率、核心数
-- **内存监控**: 使用率、可用内存、交换空间
-- **GPU监控**: 使用率、温度、内存使用、风扇转速
-- **磁盘监控**: 读写速度、使用率、温度、健康状态
-- **网络监控**: 上传/下载速度、延迟、连接状态
+## 主要功能
+- 实时监控 CPU、内存、GPU、磁盘、网络等资源
+- 高科技感 Web 大屏可视化，支持 SocketIO 实时推送
+- 多平台/多硬件支持，专为 AMD/NVIDIA GPU 优化
+- RESTful API 数据接口，便于系统集成
+- 告警推送与优化建议
+- 日志记录与历史数据存储
+- 用户认证与安全控制
+- 灵活的自定义配置，适合批量部署
 
-### 平台支持
-- ✅ Windows 10/11
-- ✅ Ubuntu 18.04+
-- ✅ 其他Linux发行版
+---
 
-## 📦 安装
+## 技术特性
+- Python 3.9+，Flask + Flask-SocketIO
+- 前端响应式大屏，支持动态粒子、流光动效
+- 支持 AMD/NVIDIA GPU、DDR4/DDR5、SSD/HDD 等主流硬件
+- 配置文件 JSON 格式，易于修改和迁移
+- 支持桌面、邮件、Webhook 等多种告警通知方式
+
+---
+
+## 安装与部署
 
 ### 1. 克隆项目
 ```bash
-git clone <repository-url>
+git clone https://github.com/kalikcn/System_Monitoring.git
 cd System_Monitoring
 ```
 
-### 2. 安装依赖
+### 2. 安装依赖（推荐虚拟环境）
 ```bash
-# 使用清华镜像源加速下载
-pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+python -m venv venv
+source venv/bin/activate  # Linux/macOS
+venv\Scripts\activate    # Windows
+pip install -r requirements.txt
 ```
 
-### 3. 运行应用
+### 3. 配置参数
+- 修改 `config/settings.json` 或 `ubuntu_monitor_config.json`，根据自己电脑硬件和需求自定义参数（详见 docs/自定义监控配置教程.md）
+
+### 4. 启动主系统
 ```bash
-python main.py
+python web/app.py
 ```
 
-## 🖥️ 使用方法
+### 5. 访问 Web 大屏
+- 主系统首页：http://localhost:5000/
+- Ubuntu 专用监控大屏：http://localhost:5000/ubuntu_monitor/
 
-### 命令行模式
-```bash
-python main.py --mode cli
-```
+---
 
-### Web界面模式
-```bash
-python main.py --mode web
-```
-然后在浏览器中访问: http://localhost:5000
-
-### API模式
-```bash
-python main.py --mode api
-```
-API端点: http://localhost:5000/api
-
-## 📊 监控指标
-
-### CPU指标
-- 总体使用率 (%)
-- 各核心使用率 (%)
-- 当前频率 (MHz)
-- 温度 (°C)
-- 核心数量
-
-### 内存指标
-- 总内存 (GB)
-- 已使用内存 (GB)
-- 可用内存 (GB)
-- 内存使用率 (%)
-- 交换空间使用情况
-
-### GPU指标
-- GPU使用率 (%)
-- 内存使用率 (%)
-- 温度 (°C)
-- 风扇转速 (RPM)
-- 功耗 (W)
-
-### 磁盘指标
-- 读写速度 (MB/s)
-- 磁盘使用率 (%)
-- 磁盘温度 (°C)
-- 健康状态
-- 剩余空间
-
-### 网络指标
-- 上传速度 (Mbps)
-- 下载速度 (Mbps)
-- 延迟 (ms)
-- 数据包丢失率 (%)
-
-## 🔧 配置
-
-配置文件位于 `config/settings.json`，可以自定义：
-- 监控间隔时间
-- 数据保存路径
-- 告警阈值
-- 日志级别
-
-## 📈 数据可视化
-
-- 实时图表显示
-- 历史数据趋势
-- 告警通知
-- 数据导出功能
-
-## 🛠️ 开发
-
-### 项目结构
+## 目录结构
 ```
 System_Monitoring/
-├── main.py                 # 主程序入口
-├── requirements.txt        # 依赖包
-├── config/                # 配置文件
-├── core/                  # 核心监控模块
-│   ├── cpu_monitor.py     # CPU监控
-│   ├── memory_monitor.py  # 内存监控
-│   ├── gpu_monitor.py     # GPU监控
-│   ├── disk_monitor.py    # 磁盘监控
-│   └── network_monitor.py # 网络监控
-├── web/                   # Web界面
-│   ├── app.py            # Flask应用
-│   ├── templates/        # HTML模板
-│   └── static/           # 静态文件
-├── api/                   # API接口
-│   └── routes.py         # API路由
-└── utils/                 # 工具函数
-    ├── logger.py         # 日志工具
-    └── helpers.py        # 辅助函数
+├── README.md                  # 项目说明
+├── requirements.txt           # 依赖包清单
+├── .gitignore                 # Git忽略文件
+├── main.py                    # 主入口（如有）
+├── install.py                 # 一键安装脚本
+├── config/                    # 配置文件
+│   └── settings.json
+├── core/                      # 监控核心模块
+│   ├── cpu_monitor.py
+│   ├── memory_monitor.py
+│   ├── gpu_monitor.py
+│   ├── disk_monitor.py
+│   └── network_monitor.py
+├── api/                       # API 路由
+│   └── routes.py
+├── security/                  # 安全与认证
+├── utils/                     # 工具与日志
+├── web/                       # Web 前端与蓝图
+│   ├── app.py
+│   ├── ubuntu_blueprint.py
+│   ├── templates/
+│   │   ├── index.html
+│   │   └── ubuntu_index.html
+│   └── static/
+├── data/                      # 监控数据（建议 .gitignore）
+├── logs/                      # 日志（建议 .gitignore）
+├── docs/
+│   └── 自定义监控配置教程.md
+└── ubuntu_monitor_config.json # Ubuntu专用配置
 ```
 
-## 📝 许可证
+---
 
-MIT License
+## 配置与自定义
+- 所有监控参数、告警阈值、通知方式等均可在 JSON 配置文件中自定义
+- 支持多台主机批量部署，每台可用不同配置
+- 详细教程见 `docs/自定义监控配置教程.md`
+
+---
+
+## 常见问题
+- **依赖安装慢/失败**：请使用国内镜像源
+- **端口冲突**：请在配置文件中修改端口
+- **GPU 监控无数据**：请确认已安装对应驱动和依赖库
+- **Web 页面无数据刷新**：请检查 SocketIO 服务是否正常
+
+---
+
+## 贡献与反馈
+- 欢迎提交 Issue 和 Pull Request
+- 如有建议或需求，请在 GitHub 讨论区留言
+
+---
+
+## 许可证
+
+本项目采用 MIT License 开源，详见 LICENSE 文件。 
+
+---
+
+## 解决步骤
+
+1. **拉取远程仓库内容并自动合并：**
+
+```bash
+git pull --rebase origin main
+```
+
+- 如果提示有冲突，按提示解决冲突后，使用 `git add .` 和 `git rebase --continue` 直到完成。
+
+2. **再次推送到 GitHub：**
+
+```bash
+<code_block_to_apply_changes_from>
+```
+
+---
+
+## 说明
+
+- `git pull --rebase` 会把你的提交“叠加”到远程已有内容之后，历史更清晰。
+- 如果你只想用本地内容覆盖远程（不推荐，除非远程内容可以丢弃），可以用 `git push -f origin main` 强制推送。但**一般建议先合并**，避免丢失远程内容。
+
+---
 
 ## 🤝 贡献
 作者：kalikcn
