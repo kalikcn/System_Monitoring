@@ -1,0 +1,27 @@
+{
+  "monitoring": {
+    "interval": 2,
+    "history_size": 1000,
+    "log_level": "INFO"
+  },
+  "alerts": {
+    "cpu_usage_threshold": 90,
+    "memory_usage_threshold": 85,
+    "gpu_usage_threshold": 95,
+    "disk_usage_threshold": 90,
+    "temperature_threshold": 80
+  },
+  "web": {
+    "host": "0.0.0.0",
+    "port": 5000,
+    "debug": false
+  },
+  "data": {
+    "save_path": "./data",
+    "export_format": "json"
+  },
+  "network": {
+    "speedtest_interval": 300,
+    "ping_targets": ["8.8.8.8", "114.114.114.114"]
+  }
+} 

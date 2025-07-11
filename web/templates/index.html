@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>系统监控工具 - 科技版</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --neon-blue: #00d4ff;
+            --neon-green: #00ff88;
+            --neon-purple: #8a2be2;
+            --neon-red: #ff006e;
+            --neon-orange: #ff6b35;
+            --dark-bg: #0a0a0a;
+            --darker-bg: #050505;
+            --card-bg: rgba(15, 15, 15, 0.9);
+            --border-glow: rgba(0, 212, 255, 0.3);
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--dark-bg);
+            font-family: 'Rajdhani', sans-serif;
+            color: var(--text-primary);
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* 粒子背景 */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: var(--neon-blue);
+            border-radius: 50%;
+            animation: float 6s infinite linear;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) translateX(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) translateX(100px);
+                opacity: 0;
+            }
+        }
+
+        /* 网格背景 */
+        .grid-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 212, 255, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 212, 255, 0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            z-index: -2;
+        }
+
+        /* 主容器 */
+        .main-container {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* 科技感卡片 */
+        .tech-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-glow);
+            border-radius: 15px;
+            backdrop-filter: blur(20px);
+            box-shadow: 
+                0 0 20px rgba(0, 212, 255, 0.2),
+                inset 0 0 20px rgba(0, 212, 255, 0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tech-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.1), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .tech-card:hover::before {
+            left: 100%;
+        }
+
+        .tech-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 
+                0 10px 30px rgba(0, 212, 255, 0.3),
+                inset 0 0 30px rgba(0, 212, 255, 0.2);
+        }
+
+        /* 标题样式 */
+        .tech-title {
+            font-family: 'Orbitron', monospace;
+            font-weight: 900;
+            background: linear-gradient(45deg, var(--neon-blue), var(--neon-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+        }
+
+        .tech-subtitle {
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        /* 指标显示 */
+        .metric-display {
+            text-align: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        .metric-value {
+            font-family: 'Orbitron', monospace;
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(45deg, var(--neon-blue), var(--neon-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        .metric-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 5px;
+        }
+
+        /* 进度条 */
+        .tech-progress {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            margin: 15px 0;
+        }
+
+        .tech-progress-bar {
+            height: 100%;
+            border-radius: 10px;
+            background: linear-gradient(90deg, var(--neon-blue), var(--neon-green));
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+            transition: width 0.3s ease;
+            position: relative;
+        }
+
+        .tech-progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        /* 状态指示器 */
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+            box-shadow: 0 0 10px currentColor;
+            animation: blink 1.5s infinite;
+        }
+
+        .status-online {
+            background-color: var(--neon-green);
+            color: var(--neon-green);
+        }
+
+        .status-offline {
+            background-color: var(--neon-red);
+            color: var(--neon-red);
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* 按钮样式 */
+        .tech-btn {
+            background: linear-gradient(45deg, var(--neon-blue), var(--neon-purple));
+            border: none;
+            border-radius: 25px;
+            color: white;
+            padding: 10px 25px;
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tech-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .tech-btn:hover::before {
+            left: 100%;
+        }
+
+        .tech-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 212, 255, 0.4);
+        }
+
+        /* 图表容器 */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            border: 1px solid var(--border-glow);
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .metric-value {
+                font-size: 2rem;
+            }
+            
+            .tech-card {
+                margin-bottom: 20px;
+            }
+        }
+
+        /* 加载动画 */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0, 212, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--neon-blue);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* 温度显示 */
+        .temperature-high {
+            color: var(--neon-red);
+            text-shadow: 0 0 10px rgba(255, 0, 110, 0.5);
+        }
+
+        .temperature-medium {
+            color: var(--neon-orange);
+            text-shadow: 0 0 10px rgba(255, 107, 53, 0.5);
+        }
+
+        .temperature-low {
+            color: var(--neon-green);
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+        }
+
+        /* 使用率颜色 */
+        .usage-critical {
+            color: var(--neon-red);
+            text-shadow: 0 0 10px rgba(255, 0, 110, 0.5);
+        }
+
+        .usage-warning {
+            color: var(--neon-orange);
+            text-shadow: 0 0 10px rgba(255, 107, 53, 0.5);
+        }
+
+        .usage-normal {
+            color: var(--neon-green);
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <!-- 粒子背景 -->
+    <div class="particles" id="particles"></div>
+    
+    <!-- 网格背景 -->
+    <div class="grid-bg"></div>
+
+    <div class="main-container">
+        <div class="container-fluid">
+            <!-- 标题栏 -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="tech-card">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <h1 class="tech-title mb-2">
+                                        <i class="fas fa-microchip me-3"></i>
+                                        系统监控中心
+                                    </h1>
+                                    <p class="tech-subtitle mb-0">
+                                        <span class="status-indicator status-online" id="connectionStatus"></span>
+                                        实时系统监控 · 智能数据分析 · 性能优化
+                                    </p>
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <p class="mb-1"><strong>系统:</strong></p>
+                                            <p class="mb-1"><strong>时间:</strong></p>
+                                        </div>
+                                        <div class="col-6">
+                                            <p class="mb-1 text-end"><span id="systemInfo">加载中...</span></p>
+                                            <p class="mb-1 text-end"><span id="currentTime">加载中...</span></p>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3">
+                                        <button class="tech-btn btn-sm me-2" onclick="runSpeedTest()">
+                                            <i class="fas fa-tachometer-alt me-1"></i>网速测试
+                                        </button>
+                                        <button class="tech-btn btn-sm" onclick="refreshData()">
+                                            <i class="fas fa-sync-alt me-1"></i>刷新
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CPU 监控 -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="tech-card">
+                        <div class="card-header border-0">
+                            <h5 class="mb-0 tech-subtitle">
+                                <i class="fas fa-microchip me-2"></i>CPU 处理器监控
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="metric-display">
+                                        <div class="metric-value" id="cpuUsage">0%</div>
+                                        <div class="metric-label">使用率</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="metric-display">
+                                        <div class="metric-value temperature-low" id="cpuTemp">--°C</div>
+                                        <div class="metric-label">温度</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="metric-display">
+                                        <div class="metric-value" id="cpuFreq">--MHz</div>
+                                        <div class="metric-label">频率</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="metric-display">
+                                        <div class="metric-value" id="cpuCores">--</div>
+                                        <div class="metric-label">核心数</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tech-progress">
+                                <div class="tech-progress-bar" id="cpuProgress" style="width: 0%"></div>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="cpuChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 内存和GPU监控 -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="tech-card">
+                        <div class="card-header border-0">
+                            <h5 class="mb-0 tech-subtitle">
+                                <i class="fas fa-memory me-2"></i>内存 监控
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="metric-display">
+                                        <div class="metric-value" id="memoryUsage">0%</div>
+                                        <div class="metric-label">使用率</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="metric-display">
+                                        <div class="metric-value" id="memoryTotal">--GB</div>
+                                        <div class="metric-label">总内存</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tech-progress">
+                                <div class="tech-progress-bar" id="memoryProgress" style="width: 0%"></div>
+                            </div>
+                            <p class="mb-0 text-center">
+                                <small class="text-secondary">
+                                    已使用: <span id="memoryUsed">--GB</span> / 可用: <span id="memoryAvailable">--GB</span>
+                                </small>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="tech-card">
+                        <div class="card-header border-0">
+                            <h5 class="mb-0 tech-subtitle">
+                                <i class="fas fa-gamepad me-2"></i>GPU 显卡监控
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="metric-display">
+                                        <div class="metric-value" id="gpuUsage">0%</div>
+                                        <div class="metric-label">使用率</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="metric-display">
+                                        <div class="metric-value temperature-low" id="gpuTemp">--°C</div>
+                                        <div class="metric-label">温度</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tech-progress">
+                                <div class="tech-progress-bar" id="gpuProgress" style="width: 0%"></div>
+                            </div>
+                            <p class="mb-0 text-center">
+                                <small class="text-secondary">内存使用: <span id="gpuMemory">--MB</span></small>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 磁盘监控 -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="tech-card">
+                        <div class="card-header border-0">
+                            <h5 class="mb-0 tech-subtitle">
+                                <i class="fas fa-hdd me-2"></i>磁盘 存储监控
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="diskInfo">
+                                <p class="text-secondary text-center">加载中...</p>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="diskChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 网络监控 -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="tech-card">
+                        <div class="card-header border-0">
+                            <h5 class="mb-0 tech-subtitle">
+                                <i class="fas fa-network-wired me-2"></i>网络 监控
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="metric-display">
+                                        <div class="metric-value" id="uploadSpeed">0 B/s</div>
+                                        <div class="metric-label">上传速度</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="metric-display">
+                                        <div class="metric-value" id="downloadSpeed">0 B/s</div>
+                                        <div class="metric-label">下载速度</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="networkChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="tech-card">
+                        <div class="card-header border-0">
+                            <h5 class="mb-0 tech-subtitle">
+                                <i class="fas fa-tachometer-alt me-2"></i>网速测试
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="speedTestResult">
+                                <p class="text-secondary text-center">点击"网速测试"按钮开始测试</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mt-4">
+        <a href="/ubuntu_monitor/" class="btn btn-primary btn-lg mb-3" style="background: linear-gradient(90deg, #00d4ff, #00ff88); border: none; font-weight: bold;">进入 Ubuntu 专用监控子系统</a>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 全局变量
+        let socket;
+        let cpuChart, memoryChart, diskChart, networkChart;
+        let cpuData = [], memoryData = [], diskData = [], networkData = [];
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            createParticles();
+            initializeCharts();
+            connectWebSocket();
+            updateTime();
+            setInterval(updateTime, 1000);
+        });
+
+        // 创建粒子效果
+        function createParticles() {
+            const particlesContainer = document.getElementById('particles');
+            const particleCount = 50;
+
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 6 + 's';
+                particle.style.animationDuration = (Math.random() * 3 + 3) + 's';
+                particlesContainer.appendChild(particle);
+            }
+        }
+
+        // 初始化图表
+        function initializeCharts() {
+            const chartOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        grid: {
+                            color: 'rgba(0, 212, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: '#b0b0b0'
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 212, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: '#b0b0b0'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            };
+
+            // CPU图表
+            const cpuCtx = document.getElementById('cpuChart').getContext('2d');
+            cpuChart = new Chart(cpuCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'CPU使用率',
+                        data: [],
+                        borderColor: '#00d4ff',
+                        backgroundColor: 'rgba(0, 212, 255, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: chartOptions
+            });
+
+            // 网络图表
+            const networkCtx = document.getElementById('networkChart').getContext('2d');
+            networkChart = new Chart(networkCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: '上传速度',
+                        data: [],
+                        borderColor: '#00ff88',
+                        backgroundColor: 'rgba(0, 255, 136, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true
+                    }, {
+                        label: '下载速度',
+                        data: [],
+                        borderColor: '#ff006e',
+                        backgroundColor: 'rgba(255, 0, 110, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: chartOptions
+            });
+        }
+
+        // 连接WebSocket
+        function connectWebSocket() {
+            socket = io();
+            
+            socket.on('connect', function() {
+                document.getElementById('connectionStatus').className = 'status-indicator status-online';
+                console.log('已连接到服务器');
+            });
+
+            socket.on('disconnect', function() {
+                document.getElementById('connectionStatus').className = 'status-indicator status-offline';
+                console.log('与服务器断开连接');
+            });
+
+            socket.on('system_data', function(data) {
+                updateDashboard(data);
+            });
+
+            socket.on('error', function(data) {
+                console.error('错误:', data.error);
+            });
+        }
+
+        // 更新仪表板
+        function updateDashboard(data) {
+            // 更新系统信息
+            if (data.system_info) {
+                document.getElementById('systemInfo').textContent = 
+                    `${data.system_info.platform} ${data.system_info.platform_version}`;
+            }
+
+            // 更新CPU信息
+            if (data.cpu && data.cpu.basic_info) {
+                const cpuInfo = data.cpu.basic_info;
+                const usage = cpuInfo.cpu_usage_percent || 0;
+                const temp = cpuInfo.cpu_temperature;
+                const freq = cpuInfo.cpu_freq_current;
+                const cores = cpuInfo.cpu_count;
+
+                document.getElementById('cpuUsage').textContent = `${usage.toFixed(1)}%`;
+                document.getElementById('cpuUsage').className = `metric-value ${getUsageClass(usage)}`;
+                
+                if (temp) {
+                    document.getElementById('cpuTemp').textContent = `${temp.toFixed(1)}°C`;
+                    document.getElementById('cpuTemp').className = `metric-value ${getTemperatureClass(temp)}`;
+                } else {
+                    document.getElementById('cpuTemp').textContent = '--°C';
+                    document.getElementById('cpuTemp').className = 'metric-value temperature-low';
+                }
+                
+                document.getElementById('cpuFreq').textContent = freq ? `${Math.round(freq)}MHz` : '--MHz';
+                document.getElementById('cpuCores').textContent = cores || '--';
+
+                // 更新进度条
+                const progressBar = document.getElementById('cpuProgress');
+                progressBar.style.width = `${usage}%`;
+
+                // 更新图表
+                updateChart(cpuChart, usage);
+            }
+
+            // 更新内存信息
+            if (data.memory && data.memory.basic_info) {
+                const memInfo = data.memory.basic_info;
+                const usage = memInfo.percent || 0;
+                const total = memInfo.total || 0;
+                const used = memInfo.used || 0;
+                const available = memInfo.available || 0;
+
+                document.getElementById('memoryUsage').textContent = `${usage.toFixed(1)}%`;
+                document.getElementById('memoryUsage').className = `metric-value ${getUsageClass(usage)}`;
+                document.getElementById('memoryTotal').textContent = `${total.toFixed(1)}GB`;
+                document.getElementById('memoryUsed').textContent = `${used.toFixed(1)}GB`;
+                document.getElementById('memoryAvailable').textContent = `${available.toFixed(1)}GB`;
+
+                const progressBar = document.getElementById('memoryProgress');
+                progressBar.style.width = `${usage}%`;
+            }
+
+            // 更新GPU信息
+            if (data.gpu && data.gpu.basic_info && data.gpu.basic_info.gpus.length > 0) {
+                const gpu = data.gpu.basic_info.gpus[0];
+                const usage = gpu.load_percent || 0;
+                const temp = gpu.temperature;
+                const memory = gpu.memory_used_mb || 0;
+
+                document.getElementById('gpuUsage').textContent = `${usage.toFixed(1)}%`;
+                document.getElementById('gpuUsage').className = `metric-value ${getUsageClass(usage)}`;
+                
+                if (temp) {
+                    document.getElementById('gpuTemp').textContent = `${temp.toFixed(1)}°C`;
+                    document.getElementById('gpuTemp').className = `metric-value ${getTemperatureClass(temp)}`;
+                } else {
+                    document.getElementById('gpuTemp').textContent = '--°C';
+                    document.getElementById('gpuTemp').className = 'metric-value temperature-low';
+                }
+                
+                document.getElementById('gpuMemory').textContent = `${Math.round(memory)}MB`;
+
+                const progressBar = document.getElementById('gpuProgress');
+                progressBar.style.width = `${usage}%`;
+            }
+
+            // 更新磁盘信息
+            if (data.disk && data.disk.basic_info) {
+                updateDiskInfo(data.disk.basic_info.disks);
+            }
+
+            // 更新网络信息
+            if (data.network && data.network.speed) {
+                const speed = data.network.speed;
+                document.getElementById('uploadSpeed').textContent = speed.upload_speed_formatted || '0 B/s';
+                document.getElementById('downloadSpeed').textContent = speed.download_speed_formatted || '0 B/s';
+
+                // 更新网络图表
+                updateNetworkChart(speed.upload_speed, speed.download_speed);
+            }
+        }
+
+        // 更新图表
+        function updateChart(chart, value) {
+            const now = new Date().toLocaleTimeString();
+            
+            chart.data.labels.push(now);
+            chart.data.datasets[0].data.push(value);
+
+            // 保持最近20个数据点
+            if (chart.data.labels.length > 20) {
+                chart.data.labels.shift();
+                chart.data.datasets[0].data.shift();
+            }
+
+            chart.update('none');
+        }
+
+        // 更新网络图表
+        function updateNetworkChart(upload, download) {
+            const now = new Date().toLocaleTimeString();
+            
+            networkChart.data.labels.push(now);
+            networkChart.data.datasets[0].data.push(upload / 1024 / 1024); // 转换为MB/s
+            networkChart.data.datasets[1].data.push(download / 1024 / 1024);
+
+            if (networkChart.data.labels.length > 20) {
+                networkChart.data.labels.shift();
+                networkChart.data.datasets[0].data.shift();
+                networkChart.data.datasets[1].data.shift();
+            }
+
+            networkChart.update('none');
+        }
+
+        // 更新磁盘信息
+        function updateDiskInfo(disks) {
+            const diskInfo = document.getElementById('diskInfo');
+            let html = '';
+
+            disks.forEach(disk => {
+                const usage = disk.percent || 0;
+                const usageClass = getUsageClass(usage);
+                
+                html += `
+                    <div class="row mb-3 align-items-center">
+                        <div class="col-md-3">
+                            <strong class="text-secondary">${disk.mountpoint}</strong>
+                        </div>
+                        <div class="col-md-7">
+                            <div class="tech-progress">
+                                <div class="tech-progress-bar ${usageClass}" style="width: ${usage}%"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 text-end">
+                            <small class="text-secondary">${disk.used.toFixed(1)}GB / ${disk.total.toFixed(1)}GB</small>
+                        </div>
+                    </div>
+                `;
+            });
+
+            diskInfo.innerHTML = html;
+        }
+
+        // 获取使用率样式类
+        function getUsageClass(usage) {
+            if (usage >= 90) return 'usage-critical';
+            if (usage >= 70) return 'usage-warning';
+            return 'usage-normal';
+        }
+
+        // 获取温度样式类
+        function getTemperatureClass(temp) {
+            if (temp >= 80) return 'temperature-high';
+            if (temp >= 60) return 'temperature-medium';
+            return 'temperature-low';
+        }
+
+        // 更新时间
+        function updateTime() {
+            document.getElementById('currentTime').textContent = new Date().toLocaleString();
+        }
+
+        // 网速测试
+        function runSpeedTest() {
+            const resultDiv = document.getElementById('speedTestResult');
+            resultDiv.innerHTML = '<p class="text-center"><span class="loading"></span> 正在测试网速...</p>';
+
+            fetch('/api/speedtest')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        resultDiv.innerHTML = `<p class="text-center text-danger">测试失败: ${data.error}</p>`;
+                    } else {
+                        resultDiv.innerHTML = `
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="metric-display">
+                                        <div class="metric-value usage-normal">${data.download_speed_mbps} Mbps</div>
+                                        <div class="metric-label">下载速度</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="metric-display">
+                                        <div class="metric-value usage-normal">${data.upload_speed_mbps} Mbps</div>
+                                        <div class="metric-label">上传速度</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12 text-center">
+                                    <small class="text-secondary">延迟: ${data.ping_ms}ms | 服务器: ${data.server}</small>
+                                </div>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    resultDiv.innerHTML = `<p class="text-center text-danger">测试失败: ${error.message}</p>`;
+                });
+        }
+
+        // 刷新数据
+        function refreshData() {
+            socket.emit('request_data');
+        }
+    </script>
+</body>
+</html> 

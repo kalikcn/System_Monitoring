@@ -1,0 +1,161 @@
+{
+  "system_info": {
+    "name": "Ubuntu系统监控",
+    "version": "2.0.0",
+    "target_hardware": {
+      "cpu": "Intel i5-14600KF",
+      "memory": "Crucial 32GB (16GB×2) DDR4 3200",
+      "gpu": "Sapphire RX 9070 XT Pulse 16GB",
+      "motherboard": "MSI PRO B760M-A WIFI DDR4 II",
+      "ssd": "ZhiTai 1TB SSD Ti600",
+      "hdd": "Western Digital 4TB Blue",
+      "psu": "Great Wall 850W X7 Gold",
+      "cooling": "Thermalright AK90 V2 + TL-C12C"
+    }
+  },
+  "monitoring": {
+    "interval": 2,
+    "history_size": 2000,
+    "log_level": "INFO",
+    "data_retention_days": 30
+  },
+  "alerts": {
+    "cpu_usage_threshold": 85,
+    "cpu_temp_threshold": 85,
+    "memory_usage_threshold": 80,
+    "gpu_usage_threshold": 90,
+    "gpu_temp_threshold": 85,
+    "gpu_memory_threshold": 90,
+    "disk_usage_threshold": 85,
+    "disk_temp_threshold": 60,
+    "network_latency_threshold": 100
+  },
+  "hardware_specific": {
+    "cpu": {
+      "model": "i5-14600KF",
+      "cores": 14,
+      "threads": 20,
+      "base_freq": 3500,
+      "max_freq": 5300,
+      "tdp": 125,
+      "monitoring": {
+        "per_core_usage": true,
+        "frequency_monitoring": true,
+        "temperature_monitoring": true,
+        "power_monitoring": true
+      }
+    },
+    "memory": {
+      "total": 32,
+      "type": "DDR4",
+      "speed": 3200,
+      "channels": 2,
+      "monitoring": {
+        "usage_per_channel": true,
+        "frequency_monitoring": true,
+        "temperature_monitoring": false
+      }
+    },
+    "gpu": {
+      "model": "RX 9070 XT",
+      "memory": 16,
+      "memory_type": "GDDR6",
+      "monitoring": {
+        "usage_monitoring": true,
+        "memory_monitoring": true,
+        "temperature_monitoring": true,
+        "fan_speed_monitoring": true,
+        "power_monitoring": true,
+        "clock_speed_monitoring": true
+      }
+    },
+    "storage": {
+      "ssd": {
+        "model": "ZhiTai Ti600",
+        "capacity": 1000,
+        "interface": "PCIe 4.0",
+        "monitoring": {
+          "health_monitoring": true,
+          "temperature_monitoring": true,
+          "wear_leveling": true,
+          "smart_attributes": true
+        }
+      },
+      "hdd": {
+        "model": "WD Blue 4TB",
+        "capacity": 4000,
+        "interface": "SATA",
+        "monitoring": {
+          "health_monitoring": true,
+          "temperature_monitoring": true,
+          "smart_attributes": true
+        }
+      }
+    },
+    "cooling": {
+      "cpu_cooler": "Thermalright AK90 V2",
+      "case_fans": "Thermalright TL-C12C",
+      "monitoring": {
+        "fan_speed_monitoring": true,
+        "temperature_monitoring": true,
+        "noise_monitoring": false
+      }
+    }
+  },
+  "web": {
+    "host": "0.0.0.0",
+    "port": 5000,
+    "debug": false,
+    "theme": "dark",
+    "auto_refresh": true,
+    "refresh_interval": 2000
+  },
+  "data": {
+    "save_path": "./data/ubuntu_monitor",
+    "export_format": "json",
+    "backup_enabled": true,
+    "backup_interval": 3600
+  },
+  "network": {
+    "speedtest_interval": 300,
+    "ping_targets": ["8.8.8.8", "114.114.114.114", "1.1.1.1"],
+    "bandwidth_monitoring": true
+  },
+  "notifications": {
+    "enabled": true,
+    "methods": ["desktop", "email", "webhook"],
+    "desktop": {
+      "enabled": true,
+      "sound": true
+    },
+    "email": {
+      "enabled": false,
+      "smtp_server": "",
+      "smtp_port": 587,
+      "username": "",
+      "password": ""
+    },
+    "webhook": {
+      "enabled": false,
+      "url": "",
+      "headers": {}
+    }
+  },
+  "performance": {
+    "cpu_optimization": {
+      "frequency_scaling": true,
+      "power_management": true,
+      "thermal_throttling": true
+    },
+    "gpu_optimization": {
+      "fan_curve": true,
+      "power_limit": true,
+      "memory_timing": true
+    },
+    "storage_optimization": {
+      "trim_enabled": true,
+      "defrag_enabled": false,
+      "cache_optimization": true
+    }
+  }
+} 
