@@ -107,9 +107,7 @@ System_Monitoring/
 
 ---
 
-## 贡献与反馈
-- 欢迎提交 Issue 和 Pull Request
-- 如有建议或需求，请在 GitHub 讨论区留言
+
 
 ---
 
@@ -119,35 +117,10 @@ System_Monitoring/
 
 ---
 
-## 解决步骤
-
-1. **拉取远程仓库内容并自动合并：**
-
-```bash
-git pull --rebase origin main
-```
-
-- 如果提示有冲突，按提示解决冲突后，使用 `git add .` 和 `git rebase --continue` 直到完成。
-
-2. **再次推送到 GitHub：**
-
-```bash
-<code_block_to_apply_changes_from>
-```
-
----
-
-## 说明
-
-- `git pull --rebase` 会把你的提交“叠加”到远程已有内容之后，历史更清晰。
-- 如果你只想用本地内容覆盖远程（不推荐，除非远程内容可以丢弃），可以用 `git push -f origin main` 强制推送。但**一般建议先合并**，避免丢失远程内容。
-
----
-
-## 🤝 贡献
-作者：kalikcn
-
-联系方式：K36@LIVE.CN
 
 
-欢迎提交Issue和Pull Request！ 
+## 贡献与反馈
+- 欢迎提交 Issue 和 Pull Request
+- 如有建议或需求，请在 GitHub 讨论区留言
+
+
